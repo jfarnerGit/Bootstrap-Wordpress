@@ -1,0 +1,52 @@
+#Assigning all necessary variables used for Authentication 
+DBName='testwordpress'
+DBUser='testwordpress'
+DBPassword='pa55word'
+DBRootPassword='pa55word'
+
+#Installing system software - MariaDB running on Apache web server.
+sudo yum install -y mariadb-server httpd wget
+sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+
+
+#Enable software for current session and configure to execute on startup if EC2 instance is stopped and started
+sudo systemctl enable httpd
+sudo systemctl enable mariadb
+sudo systemctl start httpd
+sudo systemctl start mariadb
+
+
+#Assign root password credential for MariaDB
+mysqladmin -u root password $DBRootPassword
+
+
+#Install latest version of wordpress. Remove commands are used to delete folders that were created but 
+#are no longer used.
+sudo wget http://wordpress.org/latest.tar.gz -P /var/www/html
+cd /var/www/html
+sudo tar -zxvf latest.tar.gz
+sudo cp -rvf wordpress/* .
+sudo rm -R wordpress
+sudo rm latest.tar.gz
+
+
+#Credentials are assigned in the wordpress configuration
+sudo cp ./wp-config-sample.php ./wp-config.php
+sudo sed -i "s/'database_name_here'/'$DBName'/g" wp-config.php
+sudo sed -i "s/'username_here'/'$DBUser'/g" wp-config.php
+sudo sed -i "s/'password_here'/'$DBPassword'/g" wp-config.php   
+sudo chown apache:apache * -R
+
+
+#Create temporary file to contain commands for setting up MariaDB instance on the instance
+echo "CREATE DATABASE $DBName;" >> /tmp/db.setup
+echo "CREATE USER '$DBUser'@'localhost' IDENTIFIED BY '$DBPassword';" >> /tmp/db.setup
+echo "GRANT ALL ON $DBName.* TO '$DBUser'@'localhost';" >> /tmp/db.setup
+echo "FLUSH PRIVILEGES;" >> /tmp/db.setup
+
+#Execute commands from the setup file 
+mysql -u root --password=$DBRootPassword < /tmp/db.setup
+
+#Remove temporary setup file so that sensitive credentials aren't sitting around
+sudo rm /tmp/db.setup
+
