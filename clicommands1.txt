@@ -4,6 +4,10 @@ DBUser='testwordpress'
 DBPassword='pa55word'
 DBRootPassword='pa55word'
 
+#Checking for updates
+yum -y update
+yum -y upgrade
+
 #Installing system software - MariaDB running on Apache web server.
 sudo yum install -y mariadb-server httpd wget
 sudo amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
