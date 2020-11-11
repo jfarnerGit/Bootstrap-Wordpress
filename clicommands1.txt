@@ -1,3 +1,5 @@
+#!/bin/bash -xe
+
 #Assigning all necessary variables used for Authentication 
 DBName='testwordpress'
 DBUser='testwordpress'
@@ -24,7 +26,7 @@ sudo systemctl start mariadb
 mysqladmin -u root password $DBRootPassword
 
 
-#Install latest version of wordpress. Remove commands are used to delete folders that were created but 
+#Install latest version of Wordpress. Remove commands are used to delete folders that were created but 
 #are no longer used.
 sudo wget http://wordpress.org/latest.tar.gz -P /var/www/html
 cd /var/www/html
@@ -41,6 +43,13 @@ sudo sed -i "s/'username_here'/'$DBUser'/g" wp-config.php
 sudo sed -i "s/'password_here'/'$DBPassword'/g" wp-config.php   
 sudo chown apache:apache * -R
 
+#Granting permissions for configuration files
+usermod -a -G apache ec2-user
+chown -R ec2-user:apache /var/www
+chmod 2775 /var/www
+find /var/www -type d -exec chmod 2775 {} \;
+find /var/www -type f -exec chmod 0664 {} \;
+
 
 #Create temporary file to contain commands for setting up MariaDB instance on the instance
 echo "CREATE DATABASE $DBName;" >> /tmp/db.setup
@@ -53,4 +62,6 @@ mysql -u root --password=$DBRootPassword < /tmp/db.setup
 
 #Remove temporary setup file so that sensitive credentials aren't sitting around
 sudo rm /tmp/db.setup
+
+
 
