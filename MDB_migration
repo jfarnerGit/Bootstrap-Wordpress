@@ -1,0 +1,10 @@
+#!/bin/bash -xe
+# EC2 database migration commands
+# Create sql file 
+mysqldump -u root -p jftwordpress > jftwordpress.sql
+
+# Direct to private IP of database instance
+mysql -h 'privateDBIP' -u jftwordpress -p jftwordpress < jftwordpress.sql
+
+#stop database server
+sudo service mariadb stop
